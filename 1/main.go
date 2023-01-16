@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -24,6 +26,8 @@ func NewProduct(name string, price float64) *Product {
 }
 
 func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/goexpert")
 	if err != nil {
 		panic(err)
@@ -39,7 +43,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	p, err := selectProduct(db, product.ID)
+	p, err := selectProduct(ctx, db, product.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -72,14 +76,14 @@ func updateProduct(db *sql.DB, product *Product) error {
 	return nil
 }
 
-func selectProduct(db *sql.DB, id string) (*Product, error) {
+func selectProduct(ctx context.Context, db *sql.DB, id string) (*Product, error) {
 	stmt, err := db.Prepare("select id, name, price from products where id = ?")
 	if err != nil {
 		panic(err)
 	}
 	defer stmt.Close()
 	var p Product
-	err = stmt.QueryRow(id).Scan(&p.ID, &p.Name, &p.Price)
+	err = stmt.QueryRowContext(ctx, id).Scan(&p.ID, &p.Name, &p.Price)
 	if err != nil {
 		return nil, err
 	}
