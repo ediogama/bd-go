@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -26,8 +24,8 @@ func NewProduct(name string, price float64) *Product {
 }
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer cancel()
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/goexpert")
 	if err != nil {
 		panic(err)
@@ -43,11 +41,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	p, err := selectProduct(ctx, db, product.ID)
+	// p, err := selectProduct(ctx, db, product.ID)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("O produto %v, tem o preço: %.2f", p.Name, p.Price)
+
+	products, err := selectAllProducts(db)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("O produto %v, tem o preço: %.2f", p.Name, p.Price)
+	for _, p := range products {
+		fmt.Printf("O produto %v, tem o preço: %.2f\n", p.Name, p.Price)
+	}
 }
 
 func insertProduct(db *sql.DB, product *Product) error {
@@ -76,16 +82,34 @@ func updateProduct(db *sql.DB, product *Product) error {
 	return nil
 }
 
-func selectProduct(ctx context.Context, db *sql.DB, id string) (*Product, error) {
-	stmt, err := db.Prepare("select id, name, price from products where id = ?")
+// func selectProduct(ctx context.Context, db *sql.DB, id string) (*Product, error) {
+// 	stmt, err := db.Prepare("select id, name, price from products where id = ?")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer stmt.Close()
+// 	var p Product
+// 	err = stmt.QueryRowContext(ctx, id).Scan(&p.ID, &p.Name, &p.Price)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &p, nil
+// }
+
+func selectAllProducts(db *sql.DB) ([]Product, error) {
+	rows, err := db.Query("select id, name, price from products")
 	if err != nil {
 		panic(err)
 	}
-	defer stmt.Close()
-	var p Product
-	err = stmt.QueryRowContext(ctx, id).Scan(&p.ID, &p.Name, &p.Price)
-	if err != nil {
-		return nil, err
+	defer rows.Close()
+	var products []Product
+	for rows.Next() {
+		var p Product
+		err = rows.Scan(&p.ID, &p.Name, &p.Price)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, p)
 	}
-	return &p, nil
+	return products, nil
 }
