@@ -8,8 +8,9 @@ import (
 )
 
 type Category struct {
-	ID   int `gorm:"primaryKey"`
-	Name string
+	ID       int `gorm:"primaryKey"`
+	Name     string
+	Products []Product
 }
 
 type Product struct {
@@ -29,19 +30,25 @@ func main() {
 	}
 	db.AutoMigrate(&Product{}, &Category{})
 
-	// categoryEletro := Category{Name: "Eletronicos"}
-	// db.Create(&categoryEletro)
+	category := Category{Name: "Cozinha"}
+	db.Create(&category)
 
 	db.Create(&Product{
-		Name:       "Mouse",
-		Price:      50.00,
-		CategoryId: 1,
+		Name:       "Panela",
+		Price:      10.00,
+		CategoryId: 2,
 	})
 
-	var products []Product
-	db.Preload("Category").Find(&products)
-	for _, p := range products {
-		fmt.Println(p.Name, p.Category.Name)
+	var categories []Category
+	err = db.Model(&Category{}).Preload("Products").Find(&categories).Error
+	if err != nil {
+		panic(err)
+	}
+	for _, category := range categories {
+		fmt.Println(category.Name, ":")
+		for _, product := range category.Products {
+			fmt.Println("- ", product.Name)
+		}
 	}
 
 }
