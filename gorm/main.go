@@ -28,12 +28,12 @@ func main() {
 	// })
 
 	// create batch
-	ps := []Product{
-		{Name: "Notebook", Price: 1000.00},
-		{Name: "Mouse", Price: 50.00},
-		{Name: "Keyboard", Price: 100.00},
-	}
-	db.Create(&ps)
+	// ps := []Product{
+	// 	{Name: "Notebook", Price: 1000.00},
+	// 	{Name: "Mouse", Price: 50.00},
+	// 	{Name: "Keyboard", Price: 100.00},
+	// }
+	// db.Create(&ps)
 
 	// select one
 	// var product Product
@@ -44,7 +44,13 @@ func main() {
 
 	//select all
 	var products []Product
-	db.Find(&products)
+	// db.Limit(2).Offset(2).Find(&products)
+	// for _, p := range products {
+	// 	fmt.Println(p)
+	// }
+
+	//where
+	db.Where("name LIKE ?", "%k%").Find(&products)
 	for _, p := range products {
 		fmt.Println(p)
 	}
