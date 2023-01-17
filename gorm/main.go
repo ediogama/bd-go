@@ -10,7 +10,7 @@ import (
 type Category struct {
 	ID       int `gorm:"primaryKey"`
 	Name     string
-	Products []Product
+	Products []Product `gorm:"many2many:products_categories;"`
 }
 
 type SerialNumber struct {
@@ -23,8 +23,7 @@ type Product struct {
 	ID           int `gorm:"primaryKey"`
 	Name         string
 	Price        float64
-	CategoryId   int
-	Category     Category
+	Categories   []Category `gorm:"many2many:products_categories;"`
 	SerialNumber SerialNumber
 	gorm.Model
 }
@@ -37,19 +36,22 @@ func main() {
 	}
 	db.AutoMigrate(&Product{}, &Category{}, &SerialNumber{})
 
-	// category := Category{Name: "Cozinha"}
-	// db.Create(&category)
+	category := Category{Name: "Cozinha"}
+	db.Create(&category)
 
-	// db.Create(&Product{
-	// 	Name:       "Panela",
-	// 	Price:      10.00,
-	// 	CategoryId: 1,
-	// })
+	category2 := Category{Name: "Eletronicos"}
+	db.Create(&category)
 
-	// db.Create(&SerialNumber{
-	// 	Number:    "123456",
-	// 	ProductID: 1,
-	// })
+	db.Create(&Product{
+		Name:       "Panela Eletrica",
+		Price:      100.00,
+		Categories: []Category{category, category2},
+	})
+
+	db.Create(&SerialNumber{
+		Number:    "123456",
+		ProductID: 1,
+	})
 
 	var categories []Category
 	err = db.Model(&Category{}).Preload("Products.SerialNumber").Find(&categories).Error
